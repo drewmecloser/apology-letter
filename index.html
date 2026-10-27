@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>A Heartfelt Message</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Playfair Display for elegant serif text, Plus Jakarta Sans for clean body -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <!-- Canvas Confetti Library for sparkle/heart explosion -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sky: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              300: '#7dd3fc',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              800: '#075985',
+              900: '#0c4a6e',
+              950: '#082f49',
+            },
+            night: '#0b132b',
+            paper: '#f4f7fb',
+            warmdark: '#1c2541',
+          },
+          fontFamily: {
+            serif: ['Playfair Display', 'serif'],
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            script: ['Dancing Script', 'cursive'],
+          },
+          animation: {
+            'float': 'float 6s ease-in-out infinite',
+            'pulse-soft': 'pulseSoft 3s ease-in-out infinite',
+            'fade-in': 'fadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+            },
+            pulseSoft: {
+              '0%, 100%': { opacity: '0.6' },
+              '50%': { opacity: '1' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(15px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b132b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #38bdf8;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #7dd3fc;
+    }
+
+    /* Ambient blue gradient background */
+    body {
+      background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0b132b 80%);
+      min-height: 100vh;
+      color: #e2e8f0;
+    }
+
+    /* Interactive Canvas Layer */
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 40;
+    }
+
+    /* Envelope styling & fold mechanics */
+    .envelope-wrapper {
+      perspective: 1000px;
+    }
+
+    .envelope {
+      position: relative;
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+
+    .flap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: #1e3a8a;
+      clip-path: polygon(0 0, 100% 0, 50% 100%);
+      transform-origin: top center;
+      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.3s ease;
+      z-index: 20;
+    }
+
+    .envelope.open .flap {
+      transform: rotateX(180deg);
+      z-index: 5;
+    }
+
+    .paper-texture {
+      background-color: #f8fafc;
+      background-image: radial-gradient(#cbd5e1 0.5px, transparent 0.5px);
+      background-size: 16px 16px;
+      box-shadow: 0 10px 35px -5px rgba(14, 165, 233, 0.15), 0 4px 12px -2px rgba(0, 0, 0, 0.2);
+    }
+  </style>
+</head>
+<body class="font-sans antialiased relative overflow-x-hidden flex flex-col justify-between min-h-screen">
+
+  <!-- Particle overlay canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- Navigation / Ambient Controls Header -->
+  <header class="w-full max-w-5xl mx-auto px-6 py-6 flex justify-between items-center z-30">
+    <div class="flex items-center space-x-2">
+      <span class="text-2xl text-sky-400 font-script">Warmest Thoughts</span>
+    </div>
+
+    <div class="flex items-center space-x-3">
+      <!-- Ambient Audio Toggle Button -->
+      <button id="audio-toggle" class="flex items-center space-x-2 px-4 py-2 rounded-full bg-slate-800/80 backdrop-blur-md border border-sky-500/30 text-sky-200 text-sm font-medium hover:bg-slate-700/80 transition shadow-sm" title="Toggle relaxing ambient tone">
+        <svg id="audio-icon-off" class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+        </svg>
+        <svg id="audio-icon-on" class="w-4 h-4 text-sky-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+        </svg>
+        <span id="audio-text" class="hidden sm:inline">Soft Ambient Tune</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Experience Container -->
+  <main class="flex-grow flex items-center justify-center px-4 py-8 relative">
+
+    <!-- Envelope Container (Initial Closed View) -->
+    <div id="envelope-wrapper" class="envelope-wrapper w-full max-w-lg cursor-pointer group">
+      <div id="envelope-card" class="envelope bg-slate-800/90 rounded-2xl p-8 border border-sky-500/30 shadow-2xl text-center relative overflow-hidden transition-all duration-500 transform group-hover:-translate-y-1">
+        
+        <!-- Flap element -->
+        <div class="flap"></div>
+
+        <!-- Seal & Cover Details -->
+        <div class="py-12 px-4 relative z-10 flex flex-col items-center justify-center space-y-4">
+          <div class="w-16 h-16 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-400 mb-2 animate-pulse-soft">
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+          </div>
+
+          <p class="font-serif italic text-lg text-sky-200">A special message for</p>
+          <h2 id="env-recipient-display" class="font-serif text-3xl font-semibold text-sky-100 tracking-tight">Dearest Keena</h2>
+
+          <div class="pt-6">
+            <span class="inline-flex items-center px-5 py-2.5 rounded-full bg-sky-500 text-white font-medium text-sm shadow-md group-hover:bg-sky-400 transition-all">
+              Tap to Open Envelope
+              <svg class="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Unfolded Letter View (Hidden by default) -->
+    <div id="letter-container" class="hidden w-full max-w-2xl mx-auto transition-opacity duration-700 opacity-0">
+      <article class="paper-texture rounded-3xl p-8 sm:p-12 border border-sky-100 shadow-2xl relative overflow-hidden">
+        
+        <!-- Gentle Top Motif -->
+        <div class="flex justify-center mb-6 text-sky-400">
+          <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 4.5c-4.14 0-7.5 3.36-7.5 7.5s3.36 7.5 7.5 7.5 7.5-3.36 7.5-7.5-3.36-7.5-7.5-7.5zm0 13.5c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/>
+            <circle cx="12" cy="12" r="3.5"/>
+          </svg>
+        </div>
+
+        <!-- Salutation -->
+        <div class="mb-6">
+          <h1 class="font-serif text-3xl sm:text-4xl text-slate-900 font-normal leading-snug">
+            Dearest <span id="letter-recipient-display" class="font-semibold text-sky-900">Keena</span>,
+          </h1>
+        </div>
+
+        <!-- Main Letter Content -->
+        <div id="letter-body-display" class="font-serif text-base sm:text-lg text-slate-800 leading-relaxed space-y-5">
+          <p>
+            I am writing this to you with a heavy heart, wanting to express how genuinely sorry I am for my recent actions. I know that I let you down, and seeing the hurt or frustration I caused you truly breaks my heart.
+          </p>
+          <p>
+            Your trust, comfort, and happiness mean the world to me. I was wrong, and I take full responsibility for my mistakes. Please know that it was never my intention to cause you pain, and I am deeply committed to doing better and learning from this.
+          </p>
+          <p>
+            Thank you for taking the time to read this. I want you to know how deeply I respect and appreciate you in my life.
+          </p>
+        </div>
+
+        <!-- Closing & Signature -->
+        <div class="mt-10 pt-6 border-t border-slate-200 flex flex-col items-end">
+          <p class="font-serif italic text-sky-900/80 text-sm">With all my sincerity,</p>
+          <p id="letter-sender-display" class="font-script text-3xl sm:text-4xl text-sky-700 mt-1">Onono</p>
+        </div>
+
+        <!-- Interactive Action Buttons -->
+        <div class="mt-10 pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button id="forgive-btn" class="w-full sm:w-auto px-8 py-3.5 rounded-full bg-sky-600 hover:bg-sky-500 text-white font-medium text-sm tracking-wide shadow-md hover:shadow-sky-200 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center space-x-2">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+            <span>I Forgive You</span>
+          </button>
+
+          <button id="need-time-btn" class="w-full sm:w-auto px-8 py-3.5 rounded-full bg-white hover:bg-sky-50 text-slate-800 border border-slate-300 font-medium text-sm tracking-wide shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+            I Need A Little Time
+          </button>
+        </div>
+
+        <!-- Response Feedback Display Modal/Banner -->
+        <div id="response-banner" class="hidden mt-8 p-6 rounded-2xl bg-sky-50/90 border border-sky-200 text-center animate-fade-in">
+          <p id="response-message" class="font-serif text-lg text-sky-950 font-medium"></p>
+        </div>
+
+      </article>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full max-w-5xl mx-auto px-6 py-6 text-center text-xs text-sky-300/40">
+    <p>Crafted with care, honesty, and understanding.</p>
+  </footer>
+
+  <!-- Web Logic Script -->
+  <script>
+    // State Management
+    const state = {
+      isOpen: false,
+      audioPlaying: false
+    };
+
+    // Soft Ambient Synthesizer (Warm soothing F major 7 / D minor chord progression)
+    let audioCtx = null;
+    let masterGain = null;
+    let filterNode = null;
+    let chordTimer = null;
+
+    // F maj7 / Dm9 peaceful chord frequencies
+    const chordProgression = [
+      [174.61, 220.00, 261.63, 329.63], // Fmaj7 (F3, A3, C4, E4)
+      [146.83, 220.00, 261.63, 329.63], // Dm9 (D3, A3, C4, E4)
+      [130.81, 196.00, 261.63, 329.63], // C add9 (C3, G3, C4, E4)
+      [174.61, 220.00, 261.63, 349.23]  // Fmaj7 var (F3, A3, C4, F4)
+    ];
+
+    let currentChordIndex = 0;
+
+    function initAmbientAudio() {
+      if (audioCtx) return;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContext();
+
+      // Master gain
+      masterGain = audioCtx.createGain();
+      masterGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+
+      // Low pass filter for soft tone
+      filterNode = audioCtx.createBiquadFilter();
+      filterNode.type = 'lowpass';
+      filterNode.frequency.setValueAtTime(450, audioCtx.currentTime);
+
+      filterNode.connect(masterGain);
+      masterGain.connect(audioCtx.destination);
+    }
+
+    function playChord(notes) {
+      if (!audioCtx || !state.audioPlaying) return;
+
+      const now = audioCtx.currentTime;
+      notes.forEach((freq) => {
+        const osc = audioCtx.createOscillator();
+        const noteGain = audioCtx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+
+        noteGain.gain.setValueAtTime(0.0001, now);
+        noteGain.gain.linearRampToValueAtTime(0.012, now + 2.0);
+        noteGain.gain.exponentialRampToValueAtTime(0.0001, now + 6.0);
+
+        osc.connect(noteGain);
+        noteGain.connect(filterNode);
+
+        osc.start(now);
+        osc.stop(now + 6.2);
+      });
+    }
+
+    function startChordLoop() {
+      playChord(chordProgression[currentChordIndex]);
+      currentChordIndex = (currentChordIndex + 1) % chordProgression.length;
+
+      chordTimer = setInterval(() => {
+        if (state.audioPlaying) {
+          playChord(chordProgression[currentChordIndex]);
+          currentChordIndex = (currentChordIndex + 1) % chordProgression.length;
+        }
+      }, 5000);
+    }
+
+    function toggleAudio() {
+      if (!audioCtx) initAmbientAudio();
+
+      if (state.audioPlaying) {
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.5);
+        if (chordTimer) clearInterval(chordTimer);
+        setTimeout(() => audioCtx.suspend(), 1500);
+        state.audioPlaying = false;
+        document.getElementById('audio-icon-off').classList.remove('hidden');
+        document.getElementById('audio-icon-on').classList.add('hidden');
+      } else {
+        audioCtx.resume();
+        masterGain.gain.linearRampToValueAtTime(1.0, audioCtx.currentTime + 1.5);
+        state.audioPlaying = true;
+        startChordLoop();
+        document.getElementById('audio-icon-off').classList.add('hidden');
+        document.getElementById('audio-icon-on').classList.remove('hidden');
+      }
+    }
+
+    // Envelope Opening Interaction
+    function openEnvelope() {
+      if (state.isOpen) return;
+      state.isOpen = true;
+
+      const envelopeWrapper = document.getElementById('envelope-wrapper');
+      const envelopeCard = document.getElementById('envelope-card');
+      const letterContainer = document.getElementById('letter-container');
+
+      envelopeCard.classList.add('open');
+
+      setTimeout(() => {
+        envelopeWrapper.style.transition = 'all 0.6s ease';
+        envelopeWrapper.style.opacity = '0';
+        envelopeWrapper.style.transform = 'scale(0.9)';
+
+        setTimeout(() => {
+          envelopeWrapper.classList.add('hidden');
+          letterContainer.classList.remove('hidden');
+          setTimeout(() => {
+            letterContainer.classList.remove('opacity-0');
+            letterContainer.classList.add('animate-fade-in');
+          }, 50);
+        }, 600);
+      }, 700);
+    }
+
+    // Response Handlers & Soft Blue/Rose Sparkle Particle Effect
+    function handleForgive() {
+      const banner = document.getElementById('response-banner');
+      const msg = document.getElementById('response-message');
+
+      msg.innerText = "Thank you so much for your grace and forgiveness. It means the world to me! 💙";
+      banner.classList.remove('hidden');
+
+      const heart = confetti.shapeFromPath({
+        path: 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'
+      });
+
+      confetti({
+        shapes: [heart, 'circle'],
+        particleCount: 65,
+        spread: 120,
+        origin: { y: 0.7 },
+        colors: ['#38bdf8', '#7dd3fc', '#f43f5e', '#bae6fd']
+      });
+    }
+
+    function handleNeedTime() {
+      const banner = document.getElementById('response-banner');
+      const msg = document.getElementById('response-message');
+
+      msg.innerText = "I completely understand and respect your feelings. Take all the time you need, I am here whenever you are ready. 🕊️";
+      banner.classList.remove('hidden');
+    }
+
+    // Attach Event Listeners
+    window.onload = function() {
+      document.getElementById('envelope-wrapper').addEventListener('click', openEnvelope);
+      document.getElementById('audio-toggle').addEventListener('click', toggleAudio);
+      document.getElementById('forgive-btn').addEventListener('click', handleForgive);
+      document.getElementById('need-time-btn').addEventListener('click', handleNeedTime);
+    };
+  </script>
+</body>
+</html>
